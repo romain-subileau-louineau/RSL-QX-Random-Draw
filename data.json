@@ -1,0 +1,105 @@
+{
+  "people": [
+    "Jean-Baptiste",
+    "Flavien",
+    "Zoubair",
+    "Ghizlane",
+    "Wai Ming",
+    "Nathan"
+  ],
+  "history": [
+    {
+      "name": "Nathan",
+      "date": "",
+      "week": "2026-S16"
+    },
+    {
+      "name": "Jean-Baptiste",
+      "date": "",
+      "week": "2026-S17"
+    },
+    {
+      "name": "Flavien",
+      "date": "",
+      "week": "2026-S18"
+    },
+    {
+      "name": "Zoubair",
+      "date": "",
+      "week": "2026-S19"
+    },
+    {
+      "name": "Ghizlane",
+      "date": "",
+      "week": "2026-S20"
+    },
+    {
+      "name": "Zoubair",
+      "date": "",
+      "week": "2026-S21"
+    },
+    {
+      "name": "Nathan",
+      "date": "",
+      "week": "2026-S22"
+    },
+    {
+      "name": "Wai Ming",
+      "date": "",
+      "week": "2026-S23"
+    },
+    {
+      "name": "Jean-Baptiste",
+      "date": "",
+      "week": "2026-S27"
+    },
+    {
+      "name": "Ghizlane",
+      "date": "",
+      "week": "2026-S28"
+    },
+    {
+      "name": "Wai Ming",
+      "date": "",
+      "week": "2026-S29"
+    },
+    {
+      "name": "Nathan",
+      "date": "",
+      "week": "2026-S30"
+    },
+    {
+      "name": "Ghizlane",
+      "date": "",
+      "week": "2026-S31"
+    },
+    {
+      "name": "Wai Ming",
+      "date": "",
+      "week": "2026-S32"
+    },
+    {
+      "name": "Ghizlane",
+      "date": "",
+      "week": "2026-S33"
+    },
+    {
+      "name": "Flavien",
+      "date": "",
+      "week": "2026-S34"
+    }
+  ],
+  "filters": {
+    "Jean-Baptiste": "a",
+    "Flavien": "",
+    "Zoubair": "a",
+    "Ghizlane": "",
+    "Wai Ming": "",
+    "Nathan": ""
+  },
+  "excluded": [
+    "Zoubair",
+    "Jean-Baptiste",
+    "Ghizlane"
+  ]
+}
