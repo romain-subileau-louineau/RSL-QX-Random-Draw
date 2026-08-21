@@ -1,5 +1,6 @@
 import json
 import random
+import statistics
 from datetime import datetime
 from pathlib import Path
 
@@ -51,8 +52,14 @@ def load_data() -> dict:
             d["excluded"] = [k for k, v in d["filters"].items() if v.strip()]
             del d["filters"]
         d.setdefault("excluded", [])
+        d.setdefault("start_counts", {})
         return d
-    return {"people": DEFAULT_PEOPLE[:], "history": [], "excluded": []}
+    return {
+        "people": DEFAULT_PEOPLE[:],
+        "history": [],
+        "excluded": [],
+        "start_counts": {},
+    }
 
 
 def save_data(data: dict) -> None:
@@ -64,7 +71,8 @@ def save_data(data: dict) -> None:
 
 
 def get_counts(data: dict) -> dict:
-    counts = {p: 0 for p in data["people"]}
+    # Start from per-person offsets so new members begin at the group median
+    counts = {p: data.get("start_counts", {}).get(p, 0) for p in data["people"]}
     for e in data["history"]:
         n = e.get("name", "")
         if n in counts:
@@ -204,7 +212,13 @@ st.set_page_config(page_title="Random Picker", page_icon="🎯", layout="wide")
 
 if "data" not in st.session_state:
     st.session_state.data = load_data()
-for k, v in [("autoplay", False), ("draw_secs", []), ("draw_winner", 0), ("uid", "")]:
+for k, v in [
+    ("autoplay", False),
+    ("draw_secs", []),
+    ("draw_winner", 0),
+    ("uid", ""),
+    ("confirm_clear", False),
+]:
     if k not in st.session_state:
         st.session_state[k] = v
 
@@ -224,6 +238,11 @@ with st.sidebar:
         if st.button("➕", use_container_width=True):
             n = new_name.strip()
             if n and n not in data["people"]:
+                current = get_counts(data)
+                if current:
+                    data.setdefault("start_counts", {})[n] = int(
+                        statistics.median(current.values())
+                    )
                 data["people"].append(n)
                 save_data(data)
                 st.rerun()
@@ -231,6 +250,7 @@ with st.sidebar:
     to_rm = st.selectbox("remove", ["—"] + data["people"], label_visibility="collapsed")
     if st.button("🗑️ Remove", use_container_width=True) and to_rm != "—":
         data["people"].remove(to_rm)
+        data.get("start_counts", {}).pop(to_rm, None)
         if to_rm in data.get("excluded", []):
             data["excluded"].remove(to_rm)
         save_data(data)
@@ -281,9 +301,20 @@ with st.sidebar:
                 st.rerun()
         with ce:
             if st.button("🗑️ Clear all", use_container_width=True):
-                data["history"] = []
-                save_data(data)
-                st.rerun()
+                st.session_state.confirm_clear = True
+        if st.session_state.confirm_clear:
+            st.warning("⚠️ Are you sure you want to delete the entire history?")
+            c_ok, c_cancel = st.columns(2)
+            with c_ok:
+                if st.button("✅ Yes, delete", use_container_width=True):
+                    data["history"] = []
+                    save_data(data)
+                    st.session_state.confirm_clear = False
+                    st.rerun()
+            with c_cancel:
+                if st.button("❌ Cancel", use_container_width=True):
+                    st.session_state.confirm_clear = False
+                    st.rerun()
     else:
         st.info("No draws yet.")
 
@@ -367,34 +398,31 @@ with col_wheel:
 
 with col_stats:
     st.subheader("📊 Draw odds")
-    if eligible:
+    if data["people"]:
+        eligible_set = set(eligible)
         total_w = sum(weights)
-        df_stats = pd.DataFrame(
-            [
-                {
-                    "👤 Name": p,
-                    "🔢 Draws": counts[p],
-                    "📈 Chance": f"{w / total_w * 100:.1f}%",
-                }
-                for p, w in zip(eligible, weights)
-            ]
-        )
-        st.dataframe(df_stats, use_container_width=True, hide_index=True)
+        weight_map = dict(zip(eligible, weights))
+        last_p = data["history"][-1]["name"] if data["history"] else None
+        excluded_set = set(data.get("excluded", []))
+        rows = []
+        for p in data["people"]:
+            if p in eligible_set:
+                chance = f"{weight_map[p] / total_w * 100:.1f}%" if total_w else "0.0%"
+                status = "✅"
+            elif p == last_p:
+                chance = "0.0%"
+                status = "⏭️ last drawn"
+            else:
+                chance = "0.0%"
+                status = "🚫 excluded"
+            rows.append(
+                {"👤 Name": p, "🔢 Draws": counts[p], "📈 Chance": chance, "": status}
+            )
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
         st.caption(
             "**Weight** = max(group draws) + 1 − person's draws.  \n"
             "Fewer past draws → higher weight → higher chance."
         )
-
-        non_elig = []
-        last_p = data["history"][-1]["name"] if data["history"] else None
-        if last_p:
-            non_elig.append(f"**{last_p}** – last drawn")
-        for p in data.get("excluded", []):
-            non_elig.append(f"**{p}** – manually excluded")
-        if non_elig:
-            with st.expander(f"🚫 {len(non_elig)} excluded this round"):
-                for msg in non_elig:
-                    st.write(f"• {msg}")
     else:
         st.info("No eligible person to calculate odds.")
